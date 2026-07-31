@@ -1,0 +1,2 @@
+fiscal_year,fiscal_period,quarter_number,revenue,gross_profit,operating_income,net_income,previous_quarter_revenue,prior_year_quarter_revenue,revenue_qoq_change,revenue_qoq_growth_pct,revenue_yoy_change,revenue_yoy_growth_pct,gross_margin_pct,operating_margin_pct,net_margin_pct
+2026,Q4,4,90007000000,60482000000,40603000000,35766000000,82886000000,76441000000,7121000000,8.59,13566000000,17.75,67.2,45.11,39.74
