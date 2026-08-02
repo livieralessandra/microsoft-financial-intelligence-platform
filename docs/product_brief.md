@@ -1,33 +1,47 @@
-# Microsoft Financial Intelligence Platform
+# Product brief
 
-## Product Overview
+## Product overview
 
-The Microsoft Financial Intelligence Platform is an AI-powered analytics platform that transforms Microsoft's public financial information into clear, interactive, and actionable business insights.
+The Microsoft Financial Intelligence Platform transforms Microsoft’s public SEC financial data into validated analytics and executive-ready business context. Streamlit is the primary interface; Power BI is a complementary reporting layer. The platform also includes a source-grounded AI briefing workflow that is implemented and tested but awaits Azure deployment quota for live generation.
 
-Instead of spending time searching through SEC filings, earnings releases, and investor presentations, users can quickly understand Microsoft's financial performance, strategic trends, and business drivers through dashboards, AI explanations, and intelligent search.
+## Primary user
 
-## Problem Statement
+Business professionals who need to understand and explain Microsoft’s performance quickly but do not want to spend hours locating, reconciling, and interpreting financial disclosures.
 
-Microsoft publishes comprehensive financial information every quarter and every year.
+## Problem statement
 
-Although this information is publicly available, finding and understanding the right information often requires reading lengthy financial reports and interpreting technical accounting language.
+Microsoft publishes extensive quarterly and annual information through SEC filings and Investor Relations materials. The information is public, but it is distributed across accounting-oriented facts, comparative periods, earnings tables, and management commentary. Users must determine which period a fact belongs to, calculate comparisons consistently, and distinguish reported results from explanation or interpretation.
 
-Business professionals frequently need answers to very specific questions but must search through hundreds of pages before finding the relevant information.
+## Core user need
 
-Even after locating the data, understanding why a financial metric changed and what it means often requires additional research and financial knowledge.
+> Help me understand how Microsoft is performing now, what changed, what is driving the change, and what deserves further investigation.
 
-## Mission
+## Implemented solution
 
-Reduce the time, effort, and financial expertise required to understand Microsoft's business performance.
+- A validated SEC-to-SQL financial pipeline with correct fiscal-period selection and Q4 derivation.
+- Approved quarterly and annual analytics views and exports.
+- A three-page Streamlit experience for current, quarterly, and historical performance.
+- A complementary Power BI report using the same approved analytics layer.
+- Deterministic executive insights that remain available without AI.
+- Period-specific approved Microsoft Investor Relations packets for business drivers, beginning with FY2026 Q4.
+- Provider-independent briefing generation with strict claim and source validation.
+- An Azure OpenAI adapter and explicit offline CLI that never runs during page rendering.
 
-## Success Metrics
+Natural-language search, open-ended retrieval, forecasting, valuation, and investment recommendations are not implemented.
 
-Users should be able to:
+## Desired outcomes
 
-• Find answers in seconds instead of minutes.
+Planned user research will evaluate whether representative users can:
 
-• Understand why important financial metrics changed.
+- summarize current performance in under one minute;
+- identify the largest performance driver and main headwind accurately;
+- explain the relevant comparison-period change;
+- identify what deserves attention;
+- use source and classification labels appropriately;
+- distinguish deterministic insights from AI-generated content.
 
-• Explore Microsoft's business without reading entire SEC filings.
+These outcomes are targets, not completed user-research findings.
 
-• Gain confidence in Microsoft's financial performance regardless of their finance background.
+## Current status
+
+The data, analytics, Streamlit, Power BI, grounding, validation, persistence, and Azure CLI layers are implemented. Automated tests pass without Azure access. Live Azure generation is pending a compatible deployment and available quota, and user testing is pending execution of the documented research plan.

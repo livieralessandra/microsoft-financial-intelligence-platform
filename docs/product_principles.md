@@ -24,7 +24,9 @@ The platform should simplify complexity without sacrificing accuracy.
 
 Showing what changed is not enough.
 
-Whenever possible, explain why it changed and why it matters.
+Whenever approved source material supports it, explain why it changed and why
+it matters. Management explanations must remain attributed, derived metrics
+must remain labeled, and missing evidence must not be replaced by inference.
 
 ---
 
@@ -58,6 +60,10 @@ Every insight should be traceable back to Microsoft's official financial disclos
 
 Users should always know where information comes from.
 
+Generated briefings must be revalidated against current approved context before
+display. When validation fails, the product should degrade safely rather than
+hide uncertainty.
+
 ---
 
 ## 8. AI Assists, It Doesn't Replace Thinking
@@ -65,6 +71,10 @@ Users should always know where information comes from.
 AI should explain, summarize, and surface insights.
 
 Final interpretation and decision-making remain with the user.
+
+AI availability must never be implied from infrastructure alone. The product
+labels content as AI-generated only when a real saved briefing has passed the
+complete validation workflow.
 
 ---
 
