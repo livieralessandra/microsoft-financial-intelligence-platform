@@ -59,6 +59,7 @@ class FactClassification(str, Enum):
     REPORTED = "reported"
     DERIVED = "derived"
     MANAGEMENT_EXPLANATION = "management_explanation"
+    AI_INTERPRETATION = "ai_interpretation"
 
 
 class MetricName(str, Enum):
@@ -437,6 +438,24 @@ class BriefingFigureClaim(StrictModel):
         return _to_decimal(value)
 
 
+class BriefingBusinessClaim(StrictModel):
+    """A structured claim tied to an approved business-driver metric."""
+
+    metric: StrictText
+    value: Decimal
+    unit: FigureUnit
+    classification: Literal[
+        FactClassification.REPORTED,
+        FactClassification.DERIVED,
+    ]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+
 class BriefingInsight(StrictModel):
     """One structured executive insight and its numeric claims."""
 
@@ -445,6 +464,11 @@ class BriefingInsight(StrictModel):
         "change",
         "profitability",
         "attention",
+        "overall_performance",
+        "primary_drivers",
+        "headwinds",
+        "profitability_context",
+        "investigate_next",
     ]
     title: Annotated[
         str,
@@ -454,7 +478,22 @@ class BriefingInsight(StrictModel):
         str,
         StringConstraints(strip_whitespace=True, min_length=1, max_length=500),
     ]
+    classification: FactClassification = FactClassification.AI_INTERPRETATION
+    source_ids: tuple[StrictText, ...] = ()
     figure_claims: tuple[BriefingFigureClaim, ...] = ()
+    business_claims: tuple[BriefingBusinessClaim, ...] = ()
+    management_explanation_ids: tuple[StrictText, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_claim_sources(self) -> BriefingInsight:
+        claim_sources = {
+            claim.source_id for claim in self.figure_claims
+        }
+        for claim in self.business_claims:
+            claim_sources.update(claim.source_ids)
+        if self.source_ids and not claim_sources.issubset(set(self.source_ids)):
+            raise ValueError("Every structured claim source must be declared by its insight.")
+        return self
 
 
 class ExecutiveBriefing(StrictModel):

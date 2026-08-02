@@ -5,6 +5,10 @@ from html import escape
 import pandas as pd
 import streamlit as st
 
+from src.ai.business_drivers import BusinessDriverError
+from src.ai.grounding import GroundingError, build_grounding_context
+from src.ai.schemas import ExecutiveBriefing, ReportingPeriod
+from src.ai.selection import BriefingSelection, select_briefing_for_display
 from src.charts import (
     annual_margin_trend,
     annual_revenue_and_growth,
@@ -472,6 +476,67 @@ def performance_tone(value: float) -> str:
     return "positive" if float(value) > 0 else "negative"
 
 
+def render_deterministic_briefing(data: FinancialDatasets) -> None:
+    """Render the existing deterministic fallback without an AI label."""
+    insights = build_executive_insights(data.latest, data.quarterly_analytics)
+    items = "".join(
+        '<div class="insight-item">'
+        f'<div class="insight-title">{escape(item.title)}</div>'
+        f'<div class="insight-body">{escape(item.body)}</div></div>'
+        for item in insights
+    )
+    st.markdown(
+        '<div class="briefing-shell">'
+        '<div class="briefing-header"><h3>Executive briefing</h3>'
+        '<span class="briefing-tag">Data supported</span></div>'
+        f"{items}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_ai_briefing(briefing: ExecutiveBriefing) -> None:
+    """Render a briefing that has already passed persistence revalidation."""
+    category_labels = {
+        "overall_performance": "Overall performance",
+        "primary_drivers": "Primary drivers",
+        "headwinds": "Headwinds",
+        "profitability_context": "Profitability context",
+        "attention": "What deserves attention",
+        "investigate_next": "Investigate next",
+    }
+    classification_labels = {
+        "reported": "Reported fact",
+        "derived": "Derived metric",
+        "management_explanation": "Management-attributed",
+        "ai_interpretation": "AI interpretation",
+    }
+    items = "".join(
+        '<div class="insight-item">'
+        f'<div class="insight-title">{escape(category_labels[insight.category])}'
+        f' · {escape(insight.title)}</div>'
+        f'<div class="insight-body">{escape(insight.narrative)}</div>'
+        '<div class="source-note">'
+        f'{escape(classification_labels[insight.classification.value])} · '
+        f'Sources: {escape(", ".join(insight.source_ids))}</div></div>'
+        for insight in briefing.insights
+    )
+    sources = "".join(
+        f"<li>{escape(source_id)}</li>" for source_id in briefing.source_ids
+    )
+    st.markdown(
+        '<div class="briefing-shell">'
+        '<div class="briefing-header">'
+        '<h3>AI-Generated Executive Briefing</h3>'
+        '<span class="briefing-tag">Validated</span></div>'
+        f'<div class="insight-title">{escape(briefing.headline)}</div>'
+        f'<div class="insight-body">{escape(briefing.executive_summary)}</div>'
+        f"{items}"
+        '<div class="source-note"><strong>Source transparency</strong>'
+        f"<ul>{sources}</ul></div></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def app_footer() -> None:
     """Render lightweight source, engine, visualization, and purpose metadata."""
     items = (
@@ -622,22 +687,24 @@ def executive_overview(data: FinancialDatasets) -> None:
             config={"displayModeBar": False},
         )
     with insight_column:
-        insights = build_executive_insights(
-            data.latest, data.quarterly_analytics
+        reporting_period = ReportingPeriod(
+            fiscal_year=int(latest["fiscal_year"]),
+            fiscal_period=str(latest["fiscal_period"]),
         )
-        items = "".join(
-            '<div class="insight-item">'
-            f'<div class="insight-title">{escape(item.title)}</div>'
-            f'<div class="insight-body">{escape(item.body)}</div></div>'
-            for item in insights
-        )
-        st.markdown(
-            '<div class="briefing-shell">'
-            '<div class="briefing-header"><h3>Executive briefing</h3>'
-            '<span class="briefing-tag">Data supported</span></div>'
-            f"{items}</div>",
-            unsafe_allow_html=True,
-        )
+        selection: BriefingSelection | None = None
+        try:
+            context = build_grounding_context(data, reporting_period)
+            selection = select_briefing_for_display(context)
+        except (BusinessDriverError, GroundingError, ValueError):
+            selection = None
+        if (
+            selection is not None
+            and selection.mode == "ai"
+            and selection.briefing is not None
+        ):
+            render_ai_briefing(selection.briefing)
+        else:
+            render_deterministic_briefing(data)
     st.markdown(
         '<div class="source-note">Source: Microsoft SEC Company Facts '
         "filings. Q4 values may be derived by the validated data pipeline "

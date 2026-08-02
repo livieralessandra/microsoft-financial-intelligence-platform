@@ -7,11 +7,14 @@ from src.ai.business_drivers import (
     validate_business_driver_packet,
 )
 from src.ai.grounding import GroundingError, build_grounding_context
+from src.ai.prompting import BriefingPrompt, build_briefing_prompt
+from src.ai.providers import BriefingProvider
 from src.ai.schemas import (
     AnnualFacts,
     ApprovedBusinessDriverPacket,
     BusinessDriverContext,
     BriefingFigureClaim,
+    BriefingBusinessClaim,
     BriefingInsight,
     ExecutiveBriefing,
     FigureUnit,
@@ -25,6 +28,18 @@ from src.ai.schemas import (
     SourceReference,
 )
 from src.ai.validation import BriefingValidationError, validate_briefing
+from src.ai.selection import BriefingSelection, select_briefing_for_display
+from src.ai.service import (
+    BriefingGenerationError,
+    generate_executive_briefing,
+    validate_complete_briefing,
+)
+from src.ai.storage import (
+    BriefingStorageError,
+    briefing_path,
+    load_saved_briefing,
+    save_briefing,
+)
 
 __all__ = [
     "AnnualFacts",
@@ -32,6 +47,12 @@ __all__ = [
     "BusinessDriverContext",
     "BusinessDriverError",
     "BriefingFigureClaim",
+    "BriefingBusinessClaim",
+    "BriefingGenerationError",
+    "BriefingPrompt",
+    "BriefingProvider",
+    "BriefingSelection",
+    "BriefingStorageError",
     "BriefingInsight",
     "BriefingValidationError",
     "ExecutiveBriefing",
@@ -46,8 +67,15 @@ __all__ = [
     "SegmentResult",
     "SourceReference",
     "build_grounding_context",
+    "build_briefing_prompt",
+    "briefing_path",
     "derive_driver_ranking",
     "load_business_driver_context",
+    "load_saved_briefing",
+    "generate_executive_briefing",
+    "save_briefing",
+    "select_briefing_for_display",
     "validate_briefing",
     "validate_business_driver_packet",
+    "validate_complete_briefing",
 ]

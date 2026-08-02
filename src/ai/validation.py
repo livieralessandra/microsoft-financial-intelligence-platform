@@ -3,7 +3,9 @@
 from decimal import Decimal
 
 from src.ai.schemas import (
+    BriefingBusinessClaim,
     ExecutiveBriefing,
+    FactClassification,
     FigureUnit,
     GroundedFigure,
     GroundingContext,
@@ -41,7 +43,7 @@ def _values_match(
     unit: FigureUnit,
 ) -> bool:
     """Match USD exactly and percentages within 0.01 percentage points."""
-    if unit == FigureUnit.USD:
+    if unit in {FigureUnit.USD, FigureUnit.COUNT}:
         return claimed == grounded
     return abs(claimed - grounded) <= PERCENTAGE_TOLERANCE
 
@@ -58,6 +60,12 @@ def validate_briefing(
         )
 
     allowed_sources = {source.source_id for source in context.sources}
+    driver_context = context.business_drivers
+    if driver_context is not None and driver_context.availability == "available":
+        if driver_context.packet is not None:
+            allowed_sources.update(
+                source.source_id for source in driver_context.packet.sources
+            )
     declared_sources = set(briefing.source_ids)
     unsupported_sources = sorted(declared_sources - allowed_sources)
     if unsupported_sources:
@@ -70,6 +78,15 @@ def validate_briefing(
     claim_sources: set[str] = set()
     seen_claims: set[tuple[str, str]] = set()
     for insight in briefing.insights:
+        unsupported_insight_sources = sorted(
+            set(insight.source_ids) - allowed_sources
+        )
+        if unsupported_insight_sources:
+            errors.append(
+                "Unsupported insight source IDs: "
+                f"{', '.join(unsupported_insight_sources)}."
+            )
+        claim_sources.update(insight.source_ids)
         for claim in insight.figure_claims:
             key = (claim.source_id, claim.metric.value)
             claim_sources.add(claim.source_id)
@@ -103,6 +120,34 @@ def validate_briefing(
                     f"{claim.source_id}: claimed {claim.value}, "
                     f"grounded {grounded_figure.value}."
                 )
+        for claim in insight.business_claims:
+            claim_sources.update(claim.source_ids)
+            error = _validate_business_claim(claim, context)
+            if error is not None:
+                errors.append(error)
+        if insight.management_explanation_ids:
+            if (
+                driver_context is None
+                or driver_context.availability != "available"
+                or driver_context.packet is None
+            ):
+                errors.append(
+                    "Management explanations require approved business-driver context."
+                )
+            else:
+                approved_explanations = {
+                    item.explanation_id
+                    for item in driver_context.packet.management_explanations
+                }
+                unknown = sorted(
+                    set(insight.management_explanation_ids)
+                    - approved_explanations
+                )
+                if unknown:
+                    errors.append(
+                        "Unsupported management explanations: "
+                        f"{', '.join(unknown)}."
+                    )
 
     undeclared_claim_sources = sorted(claim_sources - declared_sources)
     if undeclared_claim_sources:
@@ -113,3 +158,73 @@ def validate_briefing(
 
     if errors:
         raise BriefingValidationError(" ".join(errors))
+
+
+def _segment_metric_name(segment: str, metric: str) -> str:
+    slug = "_".join(segment.lower().replace("&", "and").split())
+    return f"segment.{slug}.{metric}"
+
+
+def _approved_business_claims(
+    context: GroundingContext,
+) -> dict[str, tuple[Decimal, FigureUnit, FactClassification, set[str]]]:
+    drivers = context.business_drivers
+    if (
+        drivers is None
+        or drivers.availability != "available"
+        or drivers.packet is None
+        or drivers.derived_ranking is None
+    ):
+        return {}
+    approved = {
+        fact.metric: (
+            fact.value,
+            fact.unit,
+            FactClassification.REPORTED,
+            set(fact.source_ids),
+        )
+        for fact in (*drivers.packet.reported_facts, *drivers.packet.product_indicators)
+    }
+    for segment in drivers.packet.segment_results:
+        for metric, value, unit in (
+            ("current_revenue", segment.current_revenue, FigureUnit.USD),
+            ("prior_year_revenue", segment.prior_year_revenue, FigureUnit.USD),
+            ("reported_growth_pct", segment.reported_growth_pct, FigureUnit.PERCENT),
+        ):
+            approved[_segment_metric_name(segment.segment, metric)] = (
+                value,
+                unit,
+                FactClassification.REPORTED,
+                set(segment.source_ids),
+            )
+    for contribution in drivers.derived_ranking.contributions:
+        for metric, value, unit in (
+            ("absolute_revenue_change", contribution.absolute_revenue_change, FigureUnit.USD),
+            ("contribution_pct", contribution.contribution_pct, FigureUnit.PERCENT),
+        ):
+            approved[_segment_metric_name(contribution.segment, metric)] = (
+                value,
+                unit,
+                FactClassification.DERIVED,
+                set(contribution.source_ids),
+            )
+    return approved
+
+
+def _validate_business_claim(
+    claim: BriefingBusinessClaim,
+    context: GroundingContext,
+) -> str | None:
+    approved = _approved_business_claims(context).get(claim.metric)
+    if approved is None:
+        return f"Unsupported business-driver claim: {claim.metric}."
+    value, unit, classification, source_ids = approved
+    if claim.classification != classification:
+        return f"Incorrect classification for business-driver claim {claim.metric}."
+    if claim.unit != unit:
+        return f"Incorrect unit for business-driver claim {claim.metric}."
+    if set(claim.source_ids) != source_ids:
+        return f"Incorrect source IDs for business-driver claim {claim.metric}."
+    if not _values_match(claim.value, value, unit):
+        return f"Figure mismatch for business-driver claim {claim.metric}."
+    return None
