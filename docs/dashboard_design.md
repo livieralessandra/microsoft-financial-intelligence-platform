@@ -61,10 +61,12 @@ The MVP must answer these questions in order:
 9. Which material movements deserve further attention?
 10. Can the user confidently summarize Microsoft's performance to someone else?
 
-The MVP can identify material movements from the available metrics. It cannot
-yet explain operational causes such as product, segment, pricing, acquisition,
-or geographic drivers because those data are not in the current analytics
-layer.
+The Power BI MVP can identify material movements from the available SQL
+metrics. Operational causes such as product, segment, pricing, acquisition, or
+geographic drivers are not in that analytics layer. Separately, the Streamlit
+AI workflow can use an approved period-specific business-driver packet; FY2026
+Q4 is the only currently approved packet, and management explanations remain
+explicitly attributed.
 
 ## 5. Information Hierarchy
 
@@ -101,7 +103,7 @@ The MVP contains three pages:
 
 1. **Executive Overview** — the current situation and the fastest path to
    understanding.
-2. **Financial Performance** — quarterly revenue, profit, comparisons, and
+2. **Quarterly Performance** — quarterly revenue, profit, comparisons, and
    profitability trends.
 3. **Historical Trends** — annual growth and margin context.
 
@@ -154,7 +156,7 @@ current direction before the page evaluates profitability.
 
 ---
 
-## 8. Page 2 — Financial Performance
+## 8. Page 2 — Quarterly Performance
 
 ### Purpose
 
@@ -274,11 +276,15 @@ future AI consumers.
 
 ## 11. What Is Excluded from the MVP
 
-Exclude the following until the required data, product behavior, or trust
-controls exist:
+Exclude the following from the Power BI MVP until the required semantic-model
+data, product behavior, or trust controls exist. Some business-driver and AI
+capabilities now exist in the Streamlit workflow through separate approved
+packets; they are not silently treated as Power BI/SQL features.
 
-- Segment, product, geography, customer, and business-driver analysis.
-- Causal explanations of why a metric changed.
+- Segment, product, geography, customer, and business-driver visuals sourced
+  from the current SQL views. FY2026 Q4 segment and product context exists only
+  in the approved business-driver packet used by AI grounding.
+- Unattributed causal explanations of why a metric changed.
 - Operating cash flow, total assets, total liabilities, cash and equivalents,
   and EPS. Operating cash flow appears in the existing metric inventory as a
   core dashboard metric, but none of these measures are currently produced by
@@ -287,8 +293,9 @@ controls exist:
 - Peer or competitor benchmarking.
 - Scenario planning and what-if parameters.
 - Natural-language search or conversational analytics.
-- Automated AI narrative generation; the MVP reserves the interface location
-  but does not claim generated analysis is available.
+- Live AI requests from Power BI or Streamlit. The implemented AI workflow uses
+  explicit offline generation and saved, revalidated JSON; live Azure
+  generation remains pending deployment and quota.
 - Filing-document navigation or accession-level drill-through. Accession
   numbers exist in the base `quarterly_financials` table but are not exposed in
   the current analytics views.
@@ -300,36 +307,39 @@ controls exist:
 These exclusions keep the first release focused on fast, trustworthy
 understanding of the financial metrics currently supported by the platform.
 
-## 12. AI Executive Summary Placeholder
+## 12. Executive Briefing Behavior
 
-Page 1 reserves a panel titled **Executive Summary**.
+Page 1 reserves an executive briefing panel.
 
-For the MVP, the panel should use either:
+The Power BI MVP should use either:
 
 1. Clearly labeled, deterministic text assembled from the latest-quarter and
    trend fields; or
-2. The neutral placeholder: **AI-generated executive summary planned for a
-   future release. Review the KPI cards and trend chart for the current
-   financial snapshot.**
+2. A neutral unavailable-state message that does not imply generation occurred.
 
-The placeholder must not imply that AI analysis has occurred.
+The Streamlit implementation now makes a stricter runtime selection: it loads a
+saved AI-generated briefing only after revalidating it against current approved
+financial and business-driver context. Otherwise it displays the existing
+deterministic briefing without an AI-generated label. Streamlit never calls
+Azure while rendering.
 
-When AI generation is introduced, the summary should:
+Any validated AI-generated summary should:
 
 - State the fiscal period being summarized.
-- Describe revenue level, QoQ growth, and YoY growth.
-- Describe gross, operating, and net margin direction using supported
-  comparisons.
-- Surface unusual movements for attention without making unsupported causal
-  claims.
+- Describe performance and profitability using supported structured claims.
+- Separate primary drivers, headwinds, attention items, and investigation
+  questions.
+- Distinguish reported facts, derived metrics, management-attributed
+  explanations, and AI interpretation.
 - Distinguish facts from interpretation.
 - Use only validated analytics-layer data.
 - Identify its source and generation status.
-- Remain concise: approximately three bullets or 75–120 words.
+- Remain concise and executive-readable.
 - Never present investment advice or replace user judgment.
 
-The current SQL views do not contain narrative drivers or source-level citations,
-so causal explanations and filing citations remain outside the MVP summary.
+The SQL views do not contain narrative drivers or source-level citations.
+Qualitative driver claims therefore require an approved business-driver packet,
+and accession-level filing citations remain unavailable.
 
 ## 13. UX and Accessibility Principles
 

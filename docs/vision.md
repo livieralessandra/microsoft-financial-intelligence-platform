@@ -1,37 +1,31 @@
-# Microsoft Financial Intelligence Platform
+# Vision
 
-## Vision
+## Product vision
 
-The Microsoft Financial Intelligence Platform transforms Microsoft's public financial data into actionable business intelligence.
+The Microsoft Financial Intelligence Platform makes public company performance faster to understand without weakening the boundary between evidence and interpretation.
 
-Instead of manually reviewing lengthy SEC filings and earnings reports, users can quickly understand Microsoft's financial performance through interactive dashboards, historical trend analysis, and AI-generated insights.
-
-The platform helps users move beyond raw financial statements to understand what is happening in Microsoft's business, why it matters, and which trends deserve attention.
-
----
+Business professionals should be able to move from an executive answer to the underlying trend and source context in one coherent experience, rather than manually reconciling SEC facts, earnings materials, spreadsheets, and narrative summaries.
 
 ## Problem
 
-Microsoft publishes comprehensive financial information every quarter and every year through SEC filings and investor reports.
+Microsoft’s financial information is comprehensive but distributed across filings, duration facts, comparative observations, analytics calculations, and management commentary. The work required to select the correct reporting period and interpret changes creates friction and increases the risk of inconsistent conclusions.
 
-Although this information is publicly available, it is difficult to navigate, compare over time, and translate into meaningful business insights. As a result, users spend more time searching for information than analyzing it.
+## Current solution
 
----
+The platform currently:
 
-## Solution
+- ingests and validates Microsoft SEC Company Facts;
+- normalizes fiscal periods and derives Q4 safely;
+- centralizes financial analytics in SQLite and SQL views;
+- serves a primary Streamlit experience and complementary Power BI report;
+- grounds business drivers in approved Investor Relations packets;
+- validates structured briefing claims and source IDs;
+- uses deterministic fallback content when validated AI output is unavailable.
 
-Build a platform that automatically:
+The Azure adapter and generation CLI are implemented, but live Azure generation remains pending a compatible deployment and available quota.
 
-- Collects Microsoft's public financial data
-- Cleans and structures the data into a consistent format
-- Stores historical financial information in a database
-- Calculates key financial metrics and trends
-- Visualizes performance through interactive dashboards
-- Generates AI-powered business summaries
-- Enables users to explore Microsoft's financial performance over time
+## Long-term direction
 
----
+Future work may expand approved periods, improve filing-level traceability, automate governed briefing review, and evaluate additional companies or metrics. Expansion should occur only when the corresponding source, validation, and user-trust controls are defined.
 
-## Long-Term Vision
-
-Create an intelligent business analytics platform that combines finance, data engineering, analytics, and artificial intelligence to make Microsoft's financial performance easier to understand and explore.
+The project does not aim to provide investment advice, price forecasts, or an unconstrained financial chatbot.
