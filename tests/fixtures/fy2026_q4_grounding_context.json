@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "entity": "Microsoft Corporation",
+  "requested_period": {
+    "fiscal_year": 2026,
+    "fiscal_period": "Q4"
+  },
+  "current_period": {
+    "period": {
+      "fiscal_year": 2026,
+      "fiscal_period": "Q4"
+    },
+    "source_id": "quarterly_analytics:FY2026-Q4",
+    "figures": [
+      {
+        "metric": "revenue",
+        "value": "90007000000",
+        "unit": "usd",
+        "source_id": "quarterly_analytics:FY2026-Q4"
+      },
+      {
+        "metric": "revenue_yoy_growth_pct",
+        "value": "17.75",
+        "unit": "percent",
+        "source_id": "quarterly_analytics:FY2026-Q4"
+      }
+    ]
+  },
+  "previous_quarter": null,
+  "prior_year_quarter": null,
+  "annual_context": null,
+  "sources": [
+    {
+      "source_id": "quarterly_analytics:FY2026-Q4",
+      "dataset": "quarterly_analytics",
+      "period_id": "FY2026-Q4"
+    }
+  ]
+}

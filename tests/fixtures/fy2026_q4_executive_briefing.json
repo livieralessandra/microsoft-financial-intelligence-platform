@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "entity": "Microsoft Corporation",
+  "reporting_period": {
+    "fiscal_year": 2026,
+    "fiscal_period": "Q4"
+  },
+  "headline": "Revenue growth remained strong in the latest quarter",
+  "executive_summary": "Microsoft reported continued revenue growth with the supporting figures explicitly grounded in the approved quarterly analytics dataset.",
+  "insights": [
+    {
+      "category": "current_performance",
+      "title": "Revenue",
+      "narrative": "Quarterly revenue reached $90.0B.",
+      "figure_claims": [
+        {
+          "metric": "revenue",
+          "value": "90007000000",
+          "unit": "usd",
+          "source_id": "quarterly_analytics:FY2026-Q4"
+        }
+      ]
+    },
+    {
+      "category": "change",
+      "title": "Year-over-year growth",
+      "narrative": "Revenue increased 17.75% year over year.",
+      "figure_claims": [
+        {
+          "metric": "revenue_yoy_growth_pct",
+          "value": "17.75",
+          "unit": "percent",
+          "source_id": "quarterly_analytics:FY2026-Q4"
+        }
+      ]
+    }
+  ],
+  "source_ids": [
+    "quarterly_analytics:FY2026-Q4"
+  ]
+}
