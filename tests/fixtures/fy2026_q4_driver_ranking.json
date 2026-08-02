@@ -1,0 +1,14 @@
+{
+  "positive_contributors": [
+    "Intelligent Cloud",
+    "Productivity and Business Processes"
+  ],
+  "negative_contributors": [
+    "More Personal Computing"
+  ],
+  "contributions": {
+    "Intelligent Cloud": {"absolute_revenue_change": "9428000000", "contribution_pct": "69.50"},
+    "Productivity and Business Processes": {"absolute_revenue_change": "4735000000", "contribution_pct": "34.90"},
+    "More Personal Computing": {"absolute_revenue_change": "-597000000", "contribution_pct": "-4.40"}
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "entity": "Microsoft Corporation",
+  "reporting_period": {"fiscal_year": 2026, "fiscal_period": "Q4"},
+  "sources": [
+    {"source_id": "msft_ir_fy2026_q4_press_release", "reporting_period": {"fiscal_year": 2026, "fiscal_period": "Q4"}, "source_type": "press_release", "title": "Microsoft FY2026 Q4 Earnings Release", "url": "https://www.microsoft.com/en-us/investor/earnings/fy-2026-q4/press-release-webcast"},
+    {"source_id": "msft_ir_fy2026_q4_metrics", "reporting_period": {"fiscal_year": 2026, "fiscal_period": "Q4"}, "source_type": "metrics", "title": "Microsoft FY2026 Q4 Earnings Metrics", "url": "https://www.microsoft.com/en-us/investor/earnings/fy-2026-q4/metrics"},
+    {"source_id": "msft_ir_fy2026_q4_earnings_call", "reporting_period": {"fiscal_year": 2026, "fiscal_period": "Q4"}, "source_type": "earnings_call", "title": "Microsoft FY2026 Q4 Earnings Conference Call", "url": "https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q4"}
+  ],
+  "reported_facts": [
+    {"metric": "revenue", "label": "Revenue", "value": "90007000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "prior_year_quarter_revenue", "label": "Prior-year-quarter revenue", "value": "76441000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "revenue_increase", "label": "Revenue increase", "value": "13566000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "revenue_growth_pct", "label": "Revenue growth", "value": "17.75", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "gross_margin_pct", "label": "Company gross margin", "value": "67.20", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_metrics"]},
+    {"metric": "operating_margin_pct", "label": "Operating margin", "value": "45.11", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_metrics"]},
+    {"metric": "net_margin_pct", "label": "Net margin", "value": "39.74", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_metrics"]},
+    {"metric": "capital_expenditures", "label": "Capital expenditures", "value": "41000000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]}
+  ],
+  "segment_results": [
+    {"segment": "Productivity and Business Processes", "current_revenue": "37847000000", "prior_year_revenue": "33112000000", "reported_growth_pct": "14", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"segment": "Intelligent Cloud", "current_revenue": "39306000000", "prior_year_revenue": "29878000000", "reported_growth_pct": "32", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"segment": "More Personal Computing", "current_revenue": "12854000000", "prior_year_revenue": "13451000000", "reported_growth_pct": "-4", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]}
+  ],
+  "product_indicators": [
+    {"metric": "microsoft_cloud_revenue", "label": "Microsoft Cloud revenue", "value": "59300000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "microsoft_cloud_revenue_growth_pct", "label": "Microsoft Cloud revenue growth", "value": "27", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "microsoft_cloud_gross_margin_pct", "label": "Microsoft Cloud gross margin", "value": "65", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_metrics"]},
+    {"metric": "commercial_remaining_performance_obligation", "label": "Commercial remaining performance obligation", "value": "678000000000", "unit": "usd", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "commercial_rpo_growth_pct", "label": "Commercial RPO growth", "value": "84", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "azure_cloud_services_growth_pct", "label": "Azure and other cloud services revenue growth", "value": "43", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "m365_commercial_cloud_reported_growth_pct", "label": "Microsoft 365 Commercial cloud growth (reported)", "value": "14", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "m365_commercial_cloud_adjusted_comparable_growth_pct", "label": "Microsoft 365 Commercial cloud growth (adjusted for prior-year comparable)", "value": "16", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "m365_consumer_cloud_growth_pct", "label": "Microsoft 365 Consumer cloud growth", "value": "24", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "linkedin_revenue_growth_pct", "label": "LinkedIn revenue growth", "value": "12", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "dynamics_365_revenue_growth_pct", "label": "Dynamics 365 revenue growth", "value": "13", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "windows_oem_devices_growth_pct", "label": "Windows OEM and Devices growth", "value": "-7", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "xbox_content_services_growth_pct", "label": "Xbox content and services growth", "value": "-10", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "search_advertising_ex_tac_growth_pct", "label": "Search advertising ex-TAC growth", "value": "10", "unit": "percent", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"]},
+    {"metric": "m365_copilot_paid_seats", "label": "Microsoft 365 Copilot paid seats", "value": "30000000", "unit": "count", "classification": "reported", "source_ids": ["msft_ir_fy2026_q4_press_release"], "qualifier": "more_than"}
+  ],
+  "derived_metrics": [],
+  "management_explanations": [
+    {"explanation_id": "demand_ai_applications", "statement": "Microsoft said strong demand across Azure and first-party AI applications and services supported performance.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "azure_capacity_constraint", "statement": "Microsoft said Azure demand continued to exceed available capacity.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "azure_efficiency_capacity", "statement": "Microsoft said Azure growth was ahead of expectations because of efficiency gains across CPU and GPU fleets and process improvements that enabled earlier delivery of new capacity; the additional capacity was quickly monetized.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "cloud_margin_pressure", "statement": "Microsoft said company and Microsoft Cloud gross-margin pressure reflected sales mix shifting toward Azure, continued AI infrastructure investment, and increased product usage, partially offset by efficiency gains in Azure and Microsoft 365 Commercial cloud.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "windows_oem_weakness", "statement": "Microsoft said Windows OEM weakness reflected lower PC market demand and a difficult prior-year comparison related to Windows 10 end of support.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "xbox_comparison", "statement": "Microsoft said Xbox content and services declined against a prior-year comparison that benefited from strong first-party content performance.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "linkedin_marketing_solutions", "statement": "Microsoft said LinkedIn growth was primarily driven by Marketing Solutions.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]},
+    {"explanation_id": "m365_consumer_arpu", "statement": "Microsoft said Microsoft 365 Consumer cloud growth was driven by ARPU growth.", "attribution": "Microsoft management", "classification": "management_explanation", "source_ids": ["msft_ir_fy2026_q4_earnings_call"]}
+  ]
+}

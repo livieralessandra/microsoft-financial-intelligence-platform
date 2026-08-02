@@ -50,6 +50,15 @@ class FigureUnit(str, Enum):
 
     USD = "usd"
     PERCENT = "percent"
+    COUNT = "count"
+
+
+class FactClassification(str, Enum):
+    """Provenance class for approved business-driver content."""
+
+    REPORTED = "reported"
+    DERIVED = "derived"
+    MANAGEMENT_EXPLANATION = "management_explanation"
 
 
 class MetricName(str, Enum):
@@ -132,6 +141,167 @@ class SourceReference(StrictModel):
             raise ValueError(
                 "Annual source period must use the format FY2026."
             )
+        return self
+
+
+class OfficialSourceMetadata(StrictModel):
+    """One approved Microsoft Investor Relations source."""
+
+    source_id: StrictText
+    reporting_period: ReportingPeriod
+    source_type: Literal["press_release", "metrics", "earnings_call"]
+    title: StrictText
+    url: Annotated[str, StringConstraints(pattern=r"^https://www\.microsoft\.com/")]
+
+
+class ReportedBusinessFact(StrictModel):
+    """A numeric fact explicitly reported in an approved source."""
+
+    metric: StrictText
+    label: StrictText
+    value: Decimal
+    unit: FigureUnit
+    classification: Literal[FactClassification.REPORTED]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+    qualifier: Literal["exact", "more_than"] = "exact"
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+    @model_validator(mode="after")
+    def validate_value(self) -> ReportedBusinessFact:
+        if self.unit in {FigureUnit.USD, FigureUnit.COUNT}:
+            if self.value != self.value.to_integral_value():
+                raise ValueError("USD and count facts must be integers.")
+        if len(self.source_ids) != len(set(self.source_ids)):
+            raise ValueError("Reported fact contains duplicate source IDs.")
+        return self
+
+
+class SegmentResult(StrictModel):
+    """Approved reported revenue facts for one operating segment."""
+
+    segment: StrictText
+    current_revenue: Decimal
+    prior_year_revenue: Decimal
+    reported_growth_pct: Decimal
+    classification: Literal[FactClassification.REPORTED]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+
+    @field_validator(
+        "current_revenue", "prior_year_revenue", "reported_growth_pct",
+        mode="before",
+    )
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+    @model_validator(mode="after")
+    def validate_result(self) -> SegmentResult:
+        for value in (self.current_revenue, self.prior_year_revenue):
+            if value != value.to_integral_value():
+                raise ValueError("Segment revenue must use integer USD.")
+        if len(self.source_ids) != len(set(self.source_ids)):
+            raise ValueError("Segment result contains duplicate source IDs.")
+        return self
+
+
+class ManagementExplanation(StrictModel):
+    """A qualitative explanation attributed to Microsoft management."""
+
+    explanation_id: StrictText
+    statement: StrictText
+    attribution: Literal["Microsoft management"]
+    classification: Literal[FactClassification.MANAGEMENT_EXPLANATION]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+
+
+class DerivedBusinessMetric(StrictModel):
+    """A computed metric that must never be represented as reported."""
+
+    metric: StrictText
+    value: Decimal
+    unit: FigureUnit
+    classification: Literal[FactClassification.DERIVED]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+
+class ApprovedBusinessDriverPacket(StrictModel):
+    """Versioned, approved facts and explanations for one fiscal period."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    entity: Literal["Microsoft Corporation"] = "Microsoft Corporation"
+    reporting_period: ReportingPeriod
+    sources: tuple[OfficialSourceMetadata, ...] = Field(min_length=1)
+    reported_facts: tuple[ReportedBusinessFact, ...] = Field(min_length=1)
+    segment_results: tuple[SegmentResult, ...] = Field(min_length=1)
+    product_indicators: tuple[ReportedBusinessFact, ...] = Field(min_length=1)
+    derived_metrics: tuple[DerivedBusinessMetric, ...] = ()
+    management_explanations: tuple[ManagementExplanation, ...] = Field(
+        min_length=1
+    )
+
+
+class DerivedSegmentContribution(StrictModel):
+    """Computed contribution of a segment to company revenue change."""
+
+    segment: StrictText
+    absolute_revenue_change: Decimal
+    contribution_pct: Decimal
+    classification: Literal[FactClassification.DERIVED]
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+
+    @field_validator(
+        "absolute_revenue_change", "contribution_pct", mode="before"
+    )
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+
+class DerivedDriverRanking(StrictModel):
+    """Deterministic positive-contributor and headwind rankings."""
+
+    reporting_period: ReportingPeriod
+    total_revenue_change: Decimal
+    contributions: tuple[DerivedSegmentContribution, ...] = Field(min_length=1)
+    positive_contributors: tuple[StrictText, ...]
+    negative_contributors: tuple[StrictText, ...]
+    classification: Literal[FactClassification.DERIVED]
+
+    @field_validator("total_revenue_change", mode="before")
+    @classmethod
+    def normalize_decimal(cls, value: object) -> Decimal:
+        return _to_decimal(value)
+
+
+class BusinessDriverContext(StrictModel):
+    """Approved driver enrichment, or an explicit unavailable state."""
+
+    reporting_period: ReportingPeriod
+    availability: Literal["available", "unavailable"]
+    packet: ApprovedBusinessDriverPacket | None = None
+    derived_ranking: DerivedDriverRanking | None = None
+    unavailable_reason: StrictText | None = None
+
+    @model_validator(mode="after")
+    def validate_availability(self) -> BusinessDriverContext:
+        if self.availability == "available":
+            if self.packet is None or self.derived_ranking is None:
+                raise ValueError("Available driver context requires packet and ranking.")
+            if self.unavailable_reason is not None:
+                raise ValueError("Available driver context cannot have a reason.")
+        elif self.packet is not None or self.derived_ranking is not None:
+            raise ValueError("Unavailable driver context cannot contain approved data.")
+        elif self.unavailable_reason is None:
+            raise ValueError("Unavailable driver context requires a reason.")
         return self
 
 
@@ -226,6 +396,7 @@ class GroundingContext(StrictModel):
     previous_quarter: PeriodFacts | None = None
     prior_year_quarter: PeriodFacts | None = None
     annual_context: AnnualFacts | None = None
+    business_drivers: BusinessDriverContext | None = None
     sources: tuple[SourceReference, ...] = Field(min_length=1)
 
     @model_validator(mode="after")

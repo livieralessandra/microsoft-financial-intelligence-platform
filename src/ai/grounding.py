@@ -17,6 +17,7 @@ from src.ai.schemas import (
     ReportingPeriod,
     SourceReference,
 )
+from src.ai.business_drivers import load_business_driver_context
 
 if TYPE_CHECKING:
     from src.data_loader import FinancialDatasets
@@ -234,5 +235,6 @@ def build_grounding_context(
         previous_quarter=previous,
         prior_year_quarter=prior_year,
         annual_context=annual,
+        business_drivers=load_business_driver_context(period),
         sources=tuple(sources),
     )
