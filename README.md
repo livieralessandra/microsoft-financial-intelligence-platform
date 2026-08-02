@@ -2,6 +2,10 @@
 
 An end-to-end financial data and decision-support platform that turns Microsoft’s public financial disclosures into validated quarterly analytics, executive dashboards, and source-grounded briefing infrastructure.
 
+## Live Demo
+
+[Launch the Microsoft Financial Intelligence Platform](https://microsoft-financial-intelligence.streamlit.app)
+
 The primary user is a business professional who needs to understand how Microsoft is performing, what changed, what is driving the change, and what deserves attention—without spending hours reconciling SEC filings and earnings materials.
 
 > Project status: the data pipeline, analytics layer, Streamlit application, Power BI report, AI grounding and validation workflow, Azure OpenAI adapter, and offline generation CLI are implemented and tested. Live Azure generation is still pending a compatible deployment and available quota. No production AI briefing is included in this repository.
