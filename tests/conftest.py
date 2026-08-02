@@ -1,10 +1,21 @@
-"""Deterministic injected financial datasets for Phase 1 unit tests."""
+"""Deterministic injected financial datasets and briefing fixtures."""
 
+from decimal import Decimal
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from src.ai.schemas import (
+    BriefingBusinessClaim,
+    BriefingFigureClaim,
+    BriefingInsight,
+    ExecutiveBriefing,
+    FactClassification,
+    FigureUnit,
+    MetricName,
+    ReportingPeriod,
+)
 from src.data_loader import FinancialDatasets
 
 
@@ -85,4 +96,68 @@ def financial_datasets() -> FinancialDatasets:
                 "net_income",
             ]
         ],
+    )
+
+
+@pytest.fixture
+def complete_briefing(financial_datasets: FinancialDatasets) -> ExecutiveBriefing:
+    """A complete provider response grounded in the injected FY2026 Q4 data."""
+    financial_source = "quarterly_analytics:FY2026-Q4"
+    press_source = "msft_ir_fy2026_q4_press_release"
+    call_source = "msft_ir_fy2026_q4_earnings_call"
+    categories = (
+        "overall_performance",
+        "primary_drivers",
+        "headwinds",
+        "profitability_context",
+        "attention",
+        "investigate_next",
+    )
+    insights = []
+    for category in categories:
+        figure_claims = ()
+        business_claims = ()
+        source_ids = (press_source,)
+        management_ids = ()
+        if category == "overall_performance":
+            source_ids = (financial_source,)
+            figure_claims = (
+                BriefingFigureClaim(
+                    metric=MetricName.REVENUE,
+                    value=Decimal("90000000000"),
+                    unit=FigureUnit.USD,
+                    source_id=financial_source,
+                ),
+            )
+        elif category == "primary_drivers":
+            business_claims = (
+                BriefingBusinessClaim(
+                    metric="segment.intelligent_cloud.contribution_pct",
+                    value=Decimal("69.50"),
+                    unit=FigureUnit.PERCENT,
+                    classification=FactClassification.DERIVED,
+                    source_ids=(press_source,),
+                ),
+            )
+        elif category == "headwinds":
+            source_ids = (call_source,)
+            management_ids = ("windows_oem_weakness",)
+        insights.append(
+            BriefingInsight(
+                category=category,
+                title=category.replace("_", " ").title(),
+                narrative="Approved context supports this executive observation.",
+                classification=FactClassification.AI_INTERPRETATION,
+                source_ids=source_ids,
+                figure_claims=figure_claims,
+                business_claims=business_claims,
+                management_explanation_ids=management_ids,
+            )
+        )
+    return ExecutiveBriefing(
+        reporting_period=ReportingPeriod.parse("FY2026-Q4"),
+        headline="Validated executive briefing",
+        executive_summary="A synthesis of approved financial and driver context.",
+        insights=tuple(insights),
+        source_ids=(financial_source, press_source, call_source),
     )

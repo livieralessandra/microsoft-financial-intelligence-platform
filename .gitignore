@@ -1,5 +1,6 @@
 .env
 .streamlit/secrets.toml
+data/generated/briefings/*.json
 __pycache__/
 *.pyc
 .DS_Store

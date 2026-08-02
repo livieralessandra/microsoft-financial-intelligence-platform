@@ -11,14 +11,8 @@ from src.ai.grounding import build_grounding_context
 from src.ai.prompting import BriefingPrompt, build_briefing_prompt
 from src.ai.providers import BriefingProvider
 from src.ai.schemas import (
-    BriefingBusinessClaim,
-    BriefingFigureClaim,
-    BriefingInsight,
     ExecutiveBriefing,
-    FactClassification,
-    FigureUnit,
     GroundingContext,
-    MetricName,
     ReportingPeriod,
 )
 from src.ai.selection import select_briefing_for_display
@@ -30,11 +24,6 @@ from src.ai.storage import (
     save_briefing,
 )
 from src.data_loader import FinancialDatasets
-
-
-FINANCIAL_SOURCE = "quarterly_analytics:FY2026-Q4"
-PRESS_SOURCE = "msft_ir_fy2026_q4_press_release"
-CALL_SOURCE = "msft_ir_fy2026_q4_earnings_call"
 
 
 class FakeProvider:
@@ -52,66 +41,6 @@ class FakeProvider:
 @pytest.fixture
 def context(financial_datasets: FinancialDatasets) -> GroundingContext:
     return build_grounding_context(financial_datasets, "FY2026-Q4")
-
-
-@pytest.fixture
-def complete_briefing(context: GroundingContext) -> ExecutiveBriefing:
-    categories = (
-        "overall_performance",
-        "primary_drivers",
-        "headwinds",
-        "profitability_context",
-        "attention",
-        "investigate_next",
-    )
-    insights = []
-    for category in categories:
-        figure_claims = ()
-        business_claims = ()
-        source_ids = (PRESS_SOURCE,)
-        management_ids = ()
-        if category == "overall_performance":
-            source_ids = (FINANCIAL_SOURCE,)
-            figure_claims = (
-                BriefingFigureClaim(
-                    metric=MetricName.REVENUE,
-                    value=Decimal("90000000000"),
-                    unit=FigureUnit.USD,
-                    source_id=FINANCIAL_SOURCE,
-                ),
-            )
-        elif category == "primary_drivers":
-            business_claims = (
-                BriefingBusinessClaim(
-                    metric="segment.intelligent_cloud.contribution_pct",
-                    value=Decimal("69.50"),
-                    unit=FigureUnit.PERCENT,
-                    classification=FactClassification.DERIVED,
-                    source_ids=(PRESS_SOURCE,),
-                ),
-            )
-        elif category == "headwinds":
-            source_ids = (CALL_SOURCE,)
-            management_ids = ("windows_oem_weakness",)
-        insights.append(
-            BriefingInsight(
-                category=category,
-                title=category.replace("_", " ").title(),
-                narrative="Approved context supports this concise executive observation.",
-                classification=FactClassification.AI_INTERPRETATION,
-                source_ids=source_ids,
-                figure_claims=figure_claims,
-                business_claims=business_claims,
-                management_explanation_ids=management_ids,
-            )
-        )
-    return ExecutiveBriefing(
-        reporting_period=context.requested_period,
-        headline="Validated executive briefing",
-        executive_summary="A concise synthesis of approved financial and driver context.",
-        insights=tuple(insights),
-        source_ids=(FINANCIAL_SOURCE, PRESS_SOURCE, CALL_SOURCE),
-    )
 
 
 def test_prompt_construction_is_deterministic(context: GroundingContext) -> None:
