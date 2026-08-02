@@ -7,7 +7,7 @@ import streamlit as st
 
 from src.ai.business_drivers import BusinessDriverError
 from src.ai.grounding import GroundingError, build_grounding_context
-from src.ai.schemas import ExecutiveBriefing, ReportingPeriod
+from src.ai.schemas import ExecutiveBriefing, GroundingContext, ReportingPeriod
 from src.ai.selection import BriefingSelection, select_briefing_for_display
 from src.charts import (
     annual_margin_trend,
@@ -16,6 +16,7 @@ from src.charts import (
     quarterly_metric_trend,
     revenue_trend,
 )
+from src.business_driver_ui import build_business_driver_presentation
 from src.data_loader import (
     DataValidationError,
     FinancialDatasets,
@@ -23,6 +24,13 @@ from src.data_loader import (
 )
 from src.formatters import fiscal_label, format_billions, format_percent
 from src.insights import build_executive_insights
+
+
+PAGE_OPTIONS = (
+    "Executive Overview",
+    "Quarterly Performance",
+    "Historical Trends",
+)
 
 
 st.set_page_config(
@@ -167,36 +175,58 @@ footer {
     line-height: 1.55;
     margin: .4rem 0 0;
 }
-div[role="radiogroup"] {
-    gap: .25rem;
+[data-testid="stButtonGroup"] {
+    width: 100%;
+    overflow: visible;
     background: #FFFFFF;
     border-radius: 14px;
     padding: .36rem;
     box-shadow: 0 4px 16px rgba(27, 26, 25, .06);
 }
-div[role="radiogroup"] label {
-    position: relative;
-    padding: .42rem .75rem;
-    border-radius: 9px;
-    transition: background-color .15s ease, color .15s ease;
+[data-testid="stButtonGroup"] [data-baseweb="button-group"] {
+    display: flex;
+    width: 100%;
+    max-width: none !important;
+    flex-wrap: wrap;
+    gap: .25rem;
 }
-div[role="radiogroup"] label[data-baseweb="radio"] > div > div:first-child {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    overflow: hidden;
+[data-testid="stButtonGroup"] button[role="radio"] {
+    flex: 1 1 12rem;
+    min-height: 2.65rem;
+    border: 1px solid transparent !important;
+    border-radius: 9px !important;
+    background: #FFFFFF !important;
+    color: var(--muted) !important;
+    font-weight: 650 !important;
+    line-height: 1.2;
+    white-space: normal;
+    transition: background-color .15s ease, border-color .15s ease,
+        color .15s ease, box-shadow .15s ease;
 }
-div[role="radiogroup"] label:focus-within {
+[data-testid="stButtonGroup"] button[role="radio"]:focus-visible {
     outline: 2px solid var(--blue-dark);
     outline-offset: 2px;
 }
-div[role="radiogroup"] label:hover { background: var(--blue-soft); }
-div[role="radiogroup"] label:has(input:checked) {
-    background: var(--blue);
-    color: #FFFFFF;
+[data-testid="stButtonGroup"] button[role="radio"]:hover {
+    border-color: #B7D6F5 !important;
+    background: var(--blue-soft) !important;
+    color: var(--blue) !important;
 }
-div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF; }
+[data-testid="stButtonGroup"] button[role="radio"][aria-checked="true"] {
+    border-color: var(--blue) !important;
+    background: var(--blue) !important;
+    color: #FFFFFF !important;
+    font-weight: 750 !important;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .18);
+}
+[data-testid="stButtonGroup"] button[role="radio"][aria-checked="true"]::after {
+    content: "Active";
+    margin-left: .45rem;
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
 .section-heading { margin: 2rem 0 .85rem; }
 .section-eyebrow {
     color: var(--blue);
@@ -328,6 +358,49 @@ div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF; }
     line-height: 1.45;
 }
 .source-note { color: var(--muted); font-size: .74rem; margin-top: .75rem; }
+.driver-grid, .signal-grid {
+    display: grid;
+    gap: .75rem;
+}
+.driver-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.signal-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.driver-card, .signal-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    box-shadow: 0 5px 18px rgba(27, 26, 25, .055);
+}
+.driver-card { padding: 1rem 1.05rem; border-left: 4px solid var(--green); }
+.driver-card.headwind { border-left-color: var(--red); }
+.driver-group-label {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.driver-name { color: var(--ink); font-size: .94rem; font-weight: 650; margin-top: .35rem; }
+.driver-change { color: var(--ink); font-size: 1.25rem; font-weight: 650; margin-top: .5rem; }
+.driver-detail { color: var(--muted); font-size: .75rem; margin-top: .25rem; }
+.classification-tag {
+    display: inline-block;
+    border-radius: 999px;
+    font-size: .61rem;
+    font-weight: 750;
+    letter-spacing: .06em;
+    padding: .22rem .4rem;
+    margin-right: .25rem;
+}
+.classification-tag.derived { color: #744DA9; background: #F4EEFB; }
+.classification-tag.reported { color: var(--blue-dark); background: var(--blue-soft); }
+.signal-card { padding: .78rem .85rem; min-height: 102px; }
+.signal-value { color: var(--blue-dark); font-size: 1.15rem; font-weight: 700; }
+.signal-card.negative .signal-value { color: var(--red); }
+.signal-card.positive .signal-value { color: var(--green); }
+.signal-label { color: var(--muted); font-size: .72rem; line-height: 1.35; margin-top: .32rem; }
+.management-item { margin: .55rem 0; color: var(--muted); line-height: 1.5; }
+.management-attribution { color: var(--blue-dark); font-size: .7rem; font-weight: 700; }
+.official-sources { color: var(--muted); font-size: .74rem; line-height: 1.55; margin-top: 1rem; }
+.official-sources a { color: var(--blue-dark); text-decoration: none; }
 [data-testid="stPlotlyChart"] {
     background: var(--surface);
     border-radius: 16px;
@@ -384,7 +457,15 @@ div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF; }
     .hero h1 { font-size: 2rem; }
     .hero-subtitle { font-size: 1rem; }
     .footer-grid { grid-template-columns: 1fr; }
-    div[role="radiogroup"] { flex-direction: column; align-items: stretch; }
+    [data-testid="stButtonGroup"] [data-baseweb="button-group"] {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    [data-testid="stButtonGroup"] button[role="radio"] {
+        width: 100%;
+        flex-basis: auto;
+        justify-content: flex-start;
+    }
 }
 </style>
 """
@@ -533,6 +614,89 @@ def render_ai_briefing(briefing: ExecutiveBriefing) -> None:
         f"{items}"
         '<div class="source-note"><strong>Source transparency</strong>'
         f"<ul>{sources}</ul></div></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_business_driver_section(context: GroundingContext) -> None:
+    """Render approved drivers without implying AI generation or causality."""
+    drivers = build_business_driver_presentation(context.business_drivers)
+    if drivers is None:
+        return
+
+    section_heading(
+        "Performance Drivers and Headwinds",
+        "Approved Microsoft-reported indicators and derived segment contributions.",
+        "Business drivers",
+    )
+    contributor_cards = "".join(
+        '<div class="driver-card">'
+        '<div class="driver-group-label">Positive contributor</div>'
+        f'<div class="driver-name">{escape(item.segment)}</div>'
+        f'<div class="driver-change">{escape(item.revenue_change)}</div>'
+        '<div class="driver-detail">Year-over-year revenue change</div>'
+        '<div class="driver-detail"><span class="classification-tag derived">'
+        f'{escape(item.classification)}</span>{escape(item.contribution)} contribution</div>'
+        "</div>"
+        for item in drivers.positive_contributors
+    )
+    headwind_cards = "".join(
+        '<div class="driver-card headwind">'
+        '<div class="driver-group-label">Headwind</div>'
+        f'<div class="driver-name">{escape(item.segment)}</div>'
+        f'<div class="driver-change">{escape(item.revenue_change)}</div>'
+        '<div class="driver-detail">Year-over-year revenue change</div>'
+        '<div class="driver-detail"><span class="classification-tag derived">'
+        f'{escape(item.classification)}</span>{escape(item.contribution)} contribution</div>'
+        "</div>"
+        for item in drivers.headwinds
+    )
+    st.markdown(
+        f'<div class="driver-grid">{contributor_cards}{headwind_cards}</div>',
+        unsafe_allow_html=True,
+    )
+
+    section_heading(
+        "Product and demand signals",
+        "Selected growth and demand indicators reported by Microsoft.",
+        "Reported indicators",
+    )
+    signals = "".join(
+        f'<div class="signal-card {escape(item.tone)}">'
+        f'<div class="signal-value">{escape(item.value)}</div>'
+        f'<div class="signal-label">{escape(item.label)}</div>'
+        '<div class="driver-detail"><span class="classification-tag reported">'
+        f'{escape(item.classification)}</span></div></div>'
+        for item in drivers.signals
+    )
+    st.markdown(
+        f'<div class="signal-grid">{signals}</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("Official management context"):
+        st.caption(
+            "Attributed statements from Microsoft management; not independently "
+            "proven causal facts or AI interpretation."
+        )
+        explanations = "".join(
+            '<div class="management-item">'
+            '<div class="management-attribution">'
+            'Microsoft management explanation</div>'
+            f'{escape(item.statement)}<div class="source-note">Sources: '
+            f'{escape(", ".join(item.source_ids))}</div></div>'
+            for item in drivers.explanations
+        )
+        st.markdown(explanations, unsafe_allow_html=True)
+
+    source_items = "".join(
+        f'<li><a href="{escape(source.url)}" target="_blank">'
+        f'{escape(source.title)}</a> · {escape(source.source_id)}</li>'
+        for source in drivers.sources
+    )
+    st.markdown(
+        '<div class="official-sources"><strong>Official sources</strong>'
+        f"<ul>{source_items}</ul></div>",
         unsafe_allow_html=True,
     )
 
@@ -686,6 +850,7 @@ def executive_overview(data: FinancialDatasets) -> None:
             width="stretch",
             config={"displayModeBar": False},
         )
+    context = None
     with insight_column:
         reporting_period = ReportingPeriod(
             fiscal_year=int(latest["fiscal_year"]),
@@ -711,6 +876,8 @@ def executive_overview(data: FinancialDatasets) -> None:
         "from full-year and nine-month observations.</div>",
         unsafe_allow_html=True,
     )
+    if context is not None:
+        render_business_driver_section(context)
 
 
 def quarterly_performance(data: FinancialDatasets) -> None:
@@ -862,10 +1029,11 @@ def main() -> None:
         )
         st.code(str(error), language=None)
         st.stop()
-    page = st.radio(
+    page = st.segmented_control(
         "Navigation",
-        ("Executive Overview", "Quarterly Performance", "Historical Trends"),
-        horizontal=True,
+        PAGE_OPTIONS,
+        default=PAGE_OPTIONS[0],
+        key="page_navigation",
         label_visibility="collapsed",
     )
     if page == "Executive Overview":
