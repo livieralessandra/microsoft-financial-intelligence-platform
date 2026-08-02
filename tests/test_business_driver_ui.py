@@ -1,5 +1,7 @@
 """Tests for deterministic approved business-driver presentation."""
 
+import socket
+
 from streamlit.testing.v1 import AppTest
 
 from src.ai.business_drivers import load_business_driver_context
@@ -85,3 +87,36 @@ def test_executive_overview_renders_approved_drivers_without_azure(
     assert "Microsoft FY2026 Q4 Earnings Release" in rendered
     assert "Microsoft FY2026 Q4 Earnings Metrics" in rendered
     assert "Microsoft FY2026 Q4 Earnings Conference Call" in rendered
+
+
+def test_executive_overview_renders_approved_source_section_without_calls(
+    monkeypatch,
+) -> None:
+    """Regress undefined briefing references in driver-source rendering."""
+    from src.ai import azure_provider
+
+    def forbidden_call(*args: object, **kwargs: object) -> None:
+        raise AssertionError("Streamlit rendering must not make external calls")
+
+    monkeypatch.setattr(
+        azure_provider.AzureOpenAIProvider,
+        "__init__",
+        forbidden_call,
+    )
+    monkeypatch.setattr(socket.socket, "connect", forbidden_call)
+
+    app = AppTest.from_file("app.py").run(timeout=20)
+
+    assert not app.exception
+    rendered = "\n".join(str(markdown.value) for markdown in app.markdown)
+    assert "Official sources" in rendered
+    assert "Microsoft FY2026 Q4 Earnings Release" in rendered
+    assert "msft_ir_fy2026_q4_press_release" in rendered
+    assert (
+        "https://www.microsoft.com/en-us/investor/earnings/"
+        "fy-2026-q4/press-release-webcast"
+    ) in rendered
+    assert "Microsoft FY2026 Q4 Earnings Metrics" in rendered
+    assert "msft_ir_fy2026_q4_metrics" in rendered
+    assert "Microsoft FY2026 Q4 Earnings Conference Call" in rendered
+    assert "msft_ir_fy2026_q4_earnings_call" in rendered

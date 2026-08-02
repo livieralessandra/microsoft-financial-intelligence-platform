@@ -46,7 +46,43 @@ Streamlit is the primary product interface:
 
 Power BI is a complementary reporting layer backed by the same approved SQL views and exports. It supports governed business reporting rather than replacing the primary Streamlit experience.
 
-No screenshots are currently stored in the repository, so this README does not use placeholder or fabricated images.
+## Product Walkthrough
+
+These screenshots show the deterministic, data-supported briefing fallback. Live Azure generation remains pending compatible deployment capacity and quota.
+
+### Executive Overview
+
+Validated FY2026 Q4 KPIs and profitability metrics provide an immediate view of current performance.
+
+![Executive Overview with FY2026 Q4 KPIs and profitability metrics](docs/images/executive-overview.jpeg)
+
+The revenue trajectory sits alongside a deterministic, data-supported executive briefing.
+
+![Revenue trajectory and deterministic executive briefing](docs/images/executive-briefing-and-drivers.jpeg)
+
+Approved Microsoft-reported indicators, derived segment contributions, headwinds, management context, and official sources explain what deserves attention.
+
+![Product and demand signals with grounded drivers and headwinds](docs/images/product-and-demand-signals.jpeg)
+
+### Quarterly Performance
+
+Interactive fiscal-year and financial-metric selection supports focused quarterly comparison and financial detail.
+
+![Quarterly financial performance with interactive selections](docs/images/quarterly-performance.jpeg)
+
+Quarterly gross, operating, and net-margin trends make changes in profitability easy to compare.
+
+![Quarterly profitability trends and supporting detail](docs/images/quarterly-profitability.jpeg)
+
+### Historical Trends
+
+Annual revenue and year-over-year growth place current results in a longer-term context.
+
+![Historical annual revenue and year-over-year growth](docs/images/historical-revenue-growth.jpeg)
+
+Long-term gross, operating, and net-margin direction shows how profitability has evolved.
+
+![Historical profitability and margin direction](docs/images/historical-profitability.jpeg)
 
 ## Architecture
 
