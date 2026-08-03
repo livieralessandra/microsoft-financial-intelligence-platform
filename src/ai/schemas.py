@@ -518,3 +518,87 @@ class ExecutiveBriefing(StrictModel):
         if len(self.source_ids) != len(set(self.source_ids)):
             raise ValueError("Executive briefing has duplicate source IDs.")
         return self
+
+
+class QAClassification(str, Enum):
+    """Provenance classes exposed by grounded question answering."""
+
+    REPORTED_FACT = "reported_fact"
+    DERIVED_METRIC = "derived_metric"
+    MANAGEMENT_EXPLANATION = "management_explanation"
+    AI_INTERPRETATION = "ai_interpretation"
+
+
+class GroundedAnswerClaim(StrictModel):
+    """One machine-checkable claim in a grounded answer."""
+
+    metric: StrictText
+    classification: QAClassification
+    value: Decimal | None = None
+    unit: FigureUnit | None = None
+    source_ids: tuple[StrictText, ...] = Field(min_length=1)
+    management_explanation_id: StrictText | None = None
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_optional_decimal(cls, value: object) -> Decimal | None:
+        return None if value is None else _to_decimal(value)
+
+    @model_validator(mode="after")
+    def validate_claim_shape(self) -> GroundedAnswerClaim:
+        if len(self.source_ids) != len(set(self.source_ids)):
+            raise ValueError("Grounded answer claim contains duplicate source IDs.")
+        is_management = self.classification == QAClassification.MANAGEMENT_EXPLANATION
+        if is_management:
+            if self.management_explanation_id is None:
+                raise ValueError("Management claims require an explanation ID.")
+            if self.value is not None or self.unit is not None:
+                raise ValueError("Management claims cannot contain numeric values.")
+        else:
+            if self.value is None or self.unit is None:
+                raise ValueError("Numeric grounded claims require a value and unit.")
+            if self.management_explanation_id is not None:
+                raise ValueError("Only management claims may use an explanation ID.")
+        return self
+
+
+class GroundedAnswer(StrictModel):
+    """Strict structured output for provider-independent financial Q&A."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    reporting_period: ReportingPeriod
+    status: Literal["supported", "insufficient_context"]
+    answer: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=1200),
+    ]
+    plain_language_explanation: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=800),
+    ] | None = None
+    claims: tuple[GroundedAnswerClaim, ...] = Field(max_length=12)
+    metric_names: tuple[StrictText, ...] = Field(max_length=12)
+    source_ids: tuple[StrictText, ...] = Field(max_length=12)
+    suggested_investigation_areas: tuple[
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)],
+        ...,
+    ] = Field(max_length=5)
+
+    @model_validator(mode="after")
+    def validate_status_and_references(self) -> GroundedAnswer:
+        if len(self.source_ids) != len(set(self.source_ids)):
+            raise ValueError("Grounded answer contains duplicate source IDs.")
+        if self.status == "supported":
+            if not self.claims or not self.source_ids:
+                raise ValueError("Supported answers require claims and sources.")
+        elif self.claims or self.metric_names or self.source_ids:
+            raise ValueError("Insufficient-context answers cannot assert facts.")
+        claim_sources = {
+            source_id for claim in self.claims for source_id in claim.source_ids
+        }
+        if not claim_sources.issubset(set(self.source_ids)):
+            raise ValueError("Every claim source must be declared by the answer.")
+        claim_metrics = {claim.metric for claim in self.claims}
+        if claim_metrics != set(self.metric_names):
+            raise ValueError("Metric names must exactly match grounded claims.")
+        return self

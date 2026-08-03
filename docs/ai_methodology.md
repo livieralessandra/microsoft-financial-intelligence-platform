@@ -93,6 +93,14 @@ Saved output is not trusted indefinitely. Streamlit revalidates it against the c
 
 Fallback content is labeled “Executive briefing” and “Data supported,” never “AI-generated.” This keeps the product useful without misrepresenting generation status.
 
+## Plain-language explanations and grounded Q&A
+
+Executive Overview includes deterministic “In Plain English” conclusions, a concise metric guide, and supported common questions built directly from the current `GroundingContext`. These features work without Azure and are not labeled AI-generated. When a period has no approved business-driver packet, explanations remain limited to supported financial conclusions.
+
+Interactive Azure Q&A is disabled by default and requires `ENABLE_AZURE_QA=true` plus the existing Azure environment configuration. Even when enabled, Azure is called only after explicit submission of a question that deterministic routing cannot answer. Provider output must match the strict `GroundedAnswer` schema and pass local period, figure, classification, source, driver, attribution, and investment-language validation before display. Insufficient approved evidence produces `insufficient_context`, not a guess.
+
+Public-use controls include a 500-character question limit, at most five Azure requests per Streamlit session, no automatic retries, a bounded response, an explicit request timeout, no tools or external retrieval, and at most three prior session turns in a prompt. Questions are retained only in Streamlit session state and are never permanently stored. The interface warns users not to submit confidential information and states that answers are not investment advice.
+
 ## Unsupported claims and safety
 
 The prompt and validators prohibit invented figures, unsupported drivers, unapproved sources, forecasts, price targets, investment recommendations, and buy/sell language. Narrative text is not treated as a substitute for structured claims. The platform supports business understanding, not investment advice.
@@ -102,6 +110,7 @@ The prompt and validators prohibit invented figures, unsupported drivers, unappr
 - SEC accession numbers are stored in the base financial table but are not exposed through the approved analytics views. Briefings therefore provide dataset/period source IDs rather than accession-level filing citations.
 - Only FY2026 Q4 has an approved business-driver packet.
 - Live Azure generation has not succeeded in this project environment because a compatible deployment and available quota are still pending.
+- Live Azure Q&A has not been enabled or tested against a deployed model; quota and a compatible deployment remain pending.
 - No user research has yet validated whether the AI briefing improves comprehension or trust relative to deterministic insights.
 
 See [Architecture](architecture.md), [Azure generation](azure_ai_generation.md), and [User research plan](user_research.md).
