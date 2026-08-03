@@ -9,6 +9,9 @@ from src.ai.business_drivers import BusinessDriverError
 from src.ai.grounding import GroundingError, build_grounding_context
 from src.ai.schemas import ExecutiveBriefing, GroundingContext, ReportingPeriod
 from src.ai.selection import BriefingSelection, select_briefing_for_display
+from src.ai.qa import QATurn
+from src.ai.qa_azure import AzureQAProvider
+from src.ask_platform import answer_platform_question, azure_qa_enabled
 from src.charts import (
     annual_margin_trend,
     annual_revenue_and_growth,
@@ -24,6 +27,11 @@ from src.data_loader import (
 )
 from src.formatters import fiscal_label, format_billions, format_percent
 from src.insights import build_executive_insights
+from src.plain_english import (
+    METRIC_DEFINITIONS,
+    build_plain_english_summary,
+    select_visible_takeaways,
+)
 
 
 PAGE_OPTIONS = (
@@ -401,6 +409,38 @@ footer {
 .management-attribution { color: var(--blue-dark); font-size: .7rem; font-weight: 700; }
 .official-sources { color: var(--muted); font-size: .74rem; line-height: 1.55; margin-top: 1rem; }
 .official-sources a { color: var(--blue-dark); text-decoration: none; }
+.plain-english-shell, .qa-shell {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: .9rem 1.05rem;
+    box-shadow: 0 6px 22px rgba(27, 26, 25, .06);
+}
+.plain-english-shell { border-left: 4px solid var(--blue); margin: .8rem 0 .55rem; }
+.plain-english-shell h3, .qa-shell h3 { color: var(--ink); margin: 0 0 .32rem; }
+.plain-english-headline { color: var(--blue-dark); font-size: 1rem; font-weight: 700; }
+.plain-english-takeaways { list-style: none; margin: .48rem 0 0; padding: 0; }
+.plain-takeaway {
+    position: relative;
+    color: var(--muted);
+    margin: .24rem 0;
+    padding-left: 1rem;
+    line-height: 1.4;
+}
+.plain-takeaway::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .52em;
+    width: .38rem;
+    height: .38rem;
+    border-radius: 50%;
+    background: var(--blue);
+}
+.qa-status { font-size: .7rem; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.qa-status.deterministic { color: var(--blue-dark); }
+.qa-status.grounded { color: var(--green); }
+.qa-status.insufficient { color: var(--muted); }
+.qa-answer { color: var(--ink); line-height: 1.55; margin-top: .35rem; }
 [data-testid="stPlotlyChart"] {
     background: var(--surface);
     border-radius: 16px;
@@ -701,6 +741,133 @@ def render_business_driver_section(context: GroundingContext) -> None:
     )
 
 
+def render_plain_english(context: GroundingContext) -> None:
+    """Render deterministic conclusions and a concise metric guide."""
+    summary = build_plain_english_summary(context)
+    visible_takeaways = select_visible_takeaways(summary)
+    visible_points = "".join(
+        f'<li class="plain-takeaway">{escape(item.text)}</li>'
+        for item in visible_takeaways
+    )
+    st.markdown(
+        '<div class="plain-english-shell"><h3>In Plain English</h3>'
+        f'<div class="plain-english-headline">{escape(summary.headline)}</div>'
+        f'<ul class="plain-english-takeaways">{visible_points}</ul></div>',
+        unsafe_allow_html=True,
+    )
+    with st.expander("View full plain-language summary"):
+        full_summary = "".join(
+            '<div class="insight-item">'
+            f'<div class="insight-body">{escape(point)}</div></div>'
+            for point in summary.points
+        )
+        st.markdown(full_summary, unsafe_allow_html=True)
+    with st.expander("Plain-language metric guide"):
+        definitions = "".join(
+            '<div class="insight-item">'
+            f'<div class="insight-title">{escape(metric)}</div>'
+            f'<div class="insight-body">{escape(definition)}</div></div>'
+            for metric, definition in METRIC_DEFINITIONS.items()
+        )
+        st.markdown(definitions, unsafe_allow_html=True)
+
+
+def _qa_source_labels(context: GroundingContext, source_ids: tuple[str, ...]) -> str:
+    titles: dict[str, str] = {}
+    drivers = context.business_drivers
+    if drivers is not None and drivers.availability == "available" and drivers.packet:
+        titles = {source.source_id: source.title for source in drivers.packet.sources}
+    return ", ".join(
+        f"{titles[source_id]} ({source_id})" if source_id in titles else source_id
+        for source_id in source_ids
+    )
+
+
+def render_ask_the_platform(context: GroundingContext) -> None:
+    """Render deterministic-first Q&A with Azure available only on submit."""
+    section_heading(
+        "Ask the Platform",
+        "Ask about displayed metrics, performance, approved drivers, and headwinds.",
+        "Plain-language Q&A",
+    )
+    st.caption(
+        "Try: What does revenue mean? · Did Microsoft perform well? · "
+        "What drove Microsoft’s growth? · What was the main headwind? · "
+        "Explain this quarter like I do not know finance."
+    )
+    enabled = azure_qa_enabled()
+    if not enabled:
+        st.caption(
+            "Deterministic explanations are available now. Live grounded Q&A is not enabled."
+        )
+    with st.form("ask_the_platform_form", clear_on_submit=False):
+        question = st.text_area(
+            "Your question",
+            max_chars=500,
+            placeholder="Ask a question about the displayed Microsoft financial context",
+            height=90,
+        )
+        submitted = st.form_submit_button("Ask the Platform")
+
+    if submitted:
+        history_values = st.session_state.get("qa_history", [])
+        history = tuple(QATurn(**turn) for turn in history_values[-3:])
+        used = int(st.session_state.get("qa_azure_questions_used", 0))
+        result = answer_platform_question(
+            question,
+            context,
+            enable_azure=enabled,
+            provider_factory=(AzureQAProvider.from_environment if enabled else None),
+            azure_questions_used=used,
+            history=history,
+        )
+        if result.azure_request_made:
+            st.session_state["qa_azure_questions_used"] = used + 1
+        if question.strip():
+            updated_history = [
+                *history_values,
+                {"question": question.strip(), "answer": result.answer},
+            ]
+            st.session_state["qa_history"] = updated_history[-20:]
+        st.session_state["qa_last_result"] = {
+            "mode": result.mode,
+            "answer": result.answer,
+            "source_ids": result.source_ids,
+            "grounded": (
+                result.grounded_answer.model_dump(mode="json")
+                if result.grounded_answer is not None
+                else None
+            ),
+        }
+
+    display = st.session_state.get("qa_last_result")
+    if display:
+        mode_labels = {
+            "deterministic": ("Deterministic explanation", "deterministic"),
+            "grounded_ai": ("Grounded AI answer", "grounded"),
+            "insufficient_context": ("Insufficient approved context", "insufficient"),
+        }
+        label, css_class = mode_labels[display["mode"]]
+        sources = tuple(display.get("source_ids", ()))
+        source_note = (
+            '<div class="source-note">Sources: '
+            f'{escape(_qa_source_labels(context, sources))}</div>'
+            if sources
+            else ""
+        )
+        st.markdown(
+            '<div class="qa-shell">'
+            f'<div class="qa-status {css_class}">{escape(label)}</div>'
+            f'<div class="qa-answer">{escape(display["answer"])}</div>'
+            f"{source_note}</div>",
+            unsafe_allow_html=True,
+        )
+    st.caption(
+        "Answers are limited to approved Microsoft financial sources and are not "
+        "investment advice. Do not submit confidential information."
+    )
+
+
 def app_footer() -> None:
     """Render lightweight source, engine, visualization, and purpose metadata."""
     items = (
@@ -782,6 +949,15 @@ def executive_overview(data: FinancialDatasets) -> None:
         period,
         primary=True,
     )
+    reporting_period = ReportingPeriod(
+        fiscal_year=int(latest["fiscal_year"]),
+        fiscal_period=str(latest["fiscal_period"]),
+    )
+    context: GroundingContext | None = None
+    try:
+        context = build_grounding_context(data, reporting_period)
+    except (BusinessDriverError, GroundingError, ValueError):
+        context = None
     section_heading(
         "Executive snapshot",
         "The latest financial period, growth momentum, and profitability "
@@ -838,6 +1014,9 @@ def executive_overview(data: FinancialDatasets) -> None:
         with column:
             kpi_card(*item)
 
+    if context is not None:
+        render_plain_english(context)
+
     section_heading(
         "Revenue trajectory and executive briefing",
         "Recent revenue momentum paired with concise, data-supported context.",
@@ -850,17 +1029,12 @@ def executive_overview(data: FinancialDatasets) -> None:
             width="stretch",
             config={"displayModeBar": False},
         )
-    context = None
     with insight_column:
-        reporting_period = ReportingPeriod(
-            fiscal_year=int(latest["fiscal_year"]),
-            fiscal_period=str(latest["fiscal_period"]),
-        )
         selection: BriefingSelection | None = None
         try:
-            context = build_grounding_context(data, reporting_period)
-            selection = select_briefing_for_display(context)
-        except (BusinessDriverError, GroundingError, ValueError):
+            if context is not None:
+                selection = select_briefing_for_display(context)
+        except ValueError:
             selection = None
         if (
             selection is not None
@@ -878,6 +1052,7 @@ def executive_overview(data: FinancialDatasets) -> None:
     )
     if context is not None:
         render_business_driver_section(context)
+        render_ask_the_platform(context)
 
 
 def quarterly_performance(data: FinancialDatasets) -> None:
