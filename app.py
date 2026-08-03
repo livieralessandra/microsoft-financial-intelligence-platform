@@ -418,23 +418,29 @@ footer {
 .plain-english-shell { border-left: 4px solid var(--blue); margin: .8rem 0 .55rem; }
 .plain-english-shell h3, .qa-shell h3 { color: var(--ink); margin: 0 0 .32rem; }
 .plain-english-headline { color: var(--blue-dark); font-size: 1rem; font-weight: 700; }
-.plain-english-takeaways { list-style: none; margin: .48rem 0 0; padding: 0; }
-.plain-takeaway {
-    position: relative;
-    color: var(--muted);
-    margin: .24rem 0;
-    padding-left: 1rem;
-    line-height: 1.4;
+.plain-english-takeaways {
+    display: grid;
+    gap: .38rem;
+    margin: .48rem 0 0;
 }
-.plain-takeaway::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: .52em;
+.plain-takeaway {
+    display: grid;
+    grid-template-columns: .42rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: .58rem;
+}
+.plain-takeaway-marker {
     width: .38rem;
     height: .38rem;
+    margin-top: .48em;
     border-radius: 50%;
     background: var(--blue);
+}
+.plain-takeaway-text {
+    min-width: 0;
+    color: var(--muted);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 .qa-status { font-size: .7rem; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
 .qa-status.deterministic { color: var(--blue-dark); }
@@ -746,13 +752,15 @@ def render_plain_english(context: GroundingContext) -> None:
     summary = build_plain_english_summary(context)
     visible_takeaways = select_visible_takeaways(summary)
     visible_points = "".join(
-        f'<li class="plain-takeaway">{escape(item.text)}</li>'
+        '<div class="plain-takeaway">'
+        '<span class="plain-takeaway-marker" aria-hidden="true"></span>'
+        f'<span class="plain-takeaway-text">{escape(item.text)}</span></div>'
         for item in visible_takeaways
     )
     st.markdown(
         '<div class="plain-english-shell"><h3>In Plain English</h3>'
         f'<div class="plain-english-headline">{escape(summary.headline)}</div>'
-        f'<ul class="plain-english-takeaways">{visible_points}</ul></div>',
+        f'<div class="plain-english-takeaways">{visible_points}</div></div>',
         unsafe_allow_html=True,
     )
     with st.expander("View full plain-language summary"):

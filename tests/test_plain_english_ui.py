@@ -71,6 +71,15 @@ def test_compact_summary_follows_kpis_and_preserves_full_detail() -> None:
     assert "Microsoft had a strong quarter" in compact_card
     assert compact_card.count('class="plain-takeaway"') <= 4
     assert compact_card.count('class="plain-takeaway"') == 4
+    assert compact_card.count(
+        'class="plain-takeaway-marker" aria-hidden="true"'
+    ) == 4
+    assert compact_card.count('class="plain-takeaway-text"') == 4
+    assert (
+        '<div class="plain-takeaway">'
+        '<span class="plain-takeaway-marker" aria-hidden="true"></span>'
+        '<span class="plain-takeaway-text">'
+    ) in compact_card
     assert "Productivity and Business Processes" not in compact_card
     assert "Azure was a major positive product signal" not in compact_card
 
